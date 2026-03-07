@@ -1,0 +1,22 @@
+# Xcode
+build/
+DerivedData/
+*.hmap
+*.ipa
+*.playground
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# User Specific
+xcuserdata/
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+# Large Media / Models
+*.mlmodelc
+*.gguf
