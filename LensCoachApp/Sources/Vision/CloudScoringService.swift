@@ -3,12 +3,12 @@ import UIKit
 
 public class CloudScoringService: ObservableObject {
     @Published public var isScoring = false
+    @Published public var lastAnonymizedFrame: UIImage?
     
     public init() {}
     
     public func fetchScores(for image: UIImage, provider: AIProvider, key: String, completion: @escaping ([String: Float]?) -> Void) {
         guard !key.isEmpty else { return }
-        guard let imageData = image.jpegData(compressionQuality: 0.5) else { return } // Low quality for speed
         
         let prompt = """
         Analyze this photography frame and provide aesthetic scores from 0.0 to 1.0.
@@ -20,13 +20,24 @@ public class CloudScoringService: ObservableObject {
         
         isScoring = true
         
-        switch provider {
-        case .anthropic:
-            requestAnthropic(imageData: imageData, prompt: prompt, key: key, completion: completion)
-        case .gemini:
-            requestGemini(imageData: imageData, prompt: prompt, key: key, completion: completion)
-        case .openai:
-            requestOpenAI(imageData: imageData, prompt: prompt, key: key, completion: completion)
+        PIIProcessor.shared.processImage(image) { anonymizedImage in
+            DispatchQueue.main.async { self.lastAnonymizedFrame = anonymizedImage }
+            
+            guard let imageData = anonymizedImage.jpegData(compressionQuality: 0.5) else {
+                DispatchQueue.main.async { self.isScoring = false }
+                return
+            }
+            
+            DispatchQueue.main.async {
+                switch provider {
+                case .anthropic:
+                    self.requestAnthropic(imageData: imageData, prompt: prompt, key: key, completion: completion)
+                case .gemini:
+                    self.requestGemini(imageData: imageData, prompt: prompt, key: key, completion: completion)
+                case .openai:
+                    self.requestOpenAI(imageData: imageData, prompt: prompt, key: key, completion: completion)
+                }
+            }
         }
     }
     

@@ -17,6 +17,7 @@ public enum AIProvider: String, CaseIterable, Identifiable {
 
 public class CloudCritiqueService: ObservableObject {
     @Published public var isAnalyzing = false
+    @Published public var anonymizedImage: UIImage?
     @Published public var critique: CritiqueResponse?
     @Published public var error: String?
     @Published public var selectedProvider: AIProvider = .anthropic
@@ -43,36 +44,46 @@ public class CloudCritiqueService: ObservableObject {
             return
         }
         
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            self.error = "Could not process image data."
-            return
-        }
-        
         isAnalyzing = true
+        anonymizedImage = nil
         error = nil
         
-        // Context context
-        let scoreContext = scores.map { "\($0.key): \(String(format: "%.2f", $0.value))" }.joined(separator: ", ")
-        let prompt = """
-        Analyze this photograph with an artistic eye. 
-        On-device technical scores are: \(scoreContext).
-        
-        Provide a detailed critique in 4 categories:
-        1. Technical (Focus, Exposure, Sharpness)
-        2. Composition (Balance, Movement, Framing)
-        3. Creative (Mood, Story, Color harmony)
-        4. Overall (Final verdict)
-        
-        Keep each category concise but professional.
-        """
+        PIIProcessor.shared.processImage(image) { anonymizedImage in
+            DispatchQueue.main.async { self.anonymizedImage = anonymizedImage }
+            
+            guard let imageData = anonymizedImage.jpegData(compressionQuality: 0.8) else {
+                DispatchQueue.main.async {
+                    self.error = "Could not process image data."
+                    self.isAnalyzing = false
+                }
+                return
+            }
+            
+            // Context context
+            let scoreContext = scores.map { "\($0.key): \(String(format: "%.2f", $0.value))" }.joined(separator: ", ")
+            let prompt = """
+            Analyze this photograph with an artistic eye. 
+            On-device technical scores are: \(scoreContext).
+            
+            Provide a detailed critique in 4 categories:
+            1. Technical (Focus, Exposure, Sharpness)
+            2. Composition (Balance, Movement, Framing)
+            3. Creative (Mood, Story, Color harmony)
+            4. Overall (Final verdict)
+            
+            Keep each category concise but professional.
+            """
 
-        switch selectedProvider {
-        case .anthropic:
-            analyzeWithAnthropic(imageData: imageData, prompt: prompt, key: key)
-        case .gemini:
-            analyzeWithGemini(imageData: imageData, prompt: prompt, key: key)
-        case .openai:
-            analyzeWithOpenAI(imageData: imageData, prompt: prompt, key: key)
+            DispatchQueue.main.async {
+                switch self.selectedProvider {
+                case .anthropic:
+                    self.analyzeWithAnthropic(imageData: imageData, prompt: prompt, key: key)
+                case .gemini:
+                    self.analyzeWithGemini(imageData: imageData, prompt: prompt, key: key)
+                case .openai:
+                    self.analyzeWithOpenAI(imageData: imageData, prompt: prompt, key: key)
+                }
+            }
         }
     }
     

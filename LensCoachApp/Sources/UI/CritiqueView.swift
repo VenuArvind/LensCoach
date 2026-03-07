@@ -31,17 +31,42 @@ public struct CritiqueView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     if service.isAnalyzing {
                         VStack(spacing: 20) {
+                            if let anonymized = service.anonymizedImage {
+                                Image(uiImage: anonymized)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(height: 200)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.green.opacity(0.5), lineWidth: 2)
+                                    )
+                                    .overlay(
+                                        HStack {
+                                            Image(systemName: "face.dashed.fill")
+                                            Text("ANONYMIZED")
+                                                .font(.system(size: 10, weight: .black))
+                                        }
+                                        .foregroundColor(.green)
+                                        .padding(6)
+                                        .background(Color.black.opacity(0.6))
+                                        .cornerRadius(4)
+                                        .padding(8),
+                                        alignment: .topTrailing
+                                    )
+                            }
+                            
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(1.5)
+                                .scaleEffect(1.2)
                             
-                            Text("\(service.selectedProvider.rawValue) is analyzing your composition...")
-                                .font(.system(size: 16, weight: .medium, design: .serif))
+                            Text("\(service.selectedProvider.rawValue) is analyzing...")
+                                .font(.system(size: 14, weight: .medium, design: .serif))
                                 .italic()
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundColor(.white.opacity(0.7))
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.top, 100)
+                        .padding(.top, 20)
                     } else if service.currentKey.isEmpty {
                         VStack(spacing: 20) {
                             Image(systemName: "key.fill")

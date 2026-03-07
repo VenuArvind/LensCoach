@@ -68,6 +68,8 @@ public struct CameraView: View {
     @State private var showCritique = false
     @State private var showGallery = false
     @State private var selectionRequired = true
+    @State private var showCloudSetup = false
+    @State private var showSettings = false
     
     public init() {}
     
@@ -117,30 +119,98 @@ public struct CameraView: View {
                             .foregroundColor(.white.opacity(0.6))
                         
                         VStack(spacing: 16) {
-                            Button(action: {
-                                cameraManager.scoringMode = .local
-                                selectionRequired = false
-                                cameraManager.start()
-                            }) {
-                                ModeButtonView(
-                                    title: "LOCAL COREML",
-                                    subtitle: "15fps / Instant / Battery Efficient",
-                                    icon: "cpu.fill",
-                                    color: .green
-                                )
-                            }
-                            
-                            Button(action: {
-                                cameraManager.scoringMode = .cloud
-                                selectionRequired = false
-                                cameraManager.start()
-                            }) {
-                                ModeButtonView(
-                                    title: "CLOUD AI",
-                                    subtitle: "5s / Deep Reasoning / LLM Analysis",
-                                    icon: "cloud.fill",
-                                    color: .blue
-                                )
+                            if !showCloudSetup {
+                                Button(action: {
+                                    cameraManager.scoringMode = .local
+                                    selectionRequired = false
+                                    cameraManager.start()
+                                }) {
+                                    ModeButtonView(
+                                        title: "LOCAL COREML",
+                                        subtitle: "15fps / Instant / Battery Efficient",
+                                        icon: "cpu.fill",
+                                        color: .green
+                                    )
+                                }
+                                
+                                Button(action: {
+                                    showCloudSetup = true
+                                }) {
+                                    ModeButtonView(
+                                        title: "CLOUD AI",
+                                        subtitle: "5s / Deep Reasoning / LLM Analysis",
+                                        icon: "cloud.fill",
+                                        color: .blue
+                                    )
+                                }
+                            } else {
+                                // Cloud Setup Sub-screen
+                                VStack(spacing: 20) {
+                                    Text("Cloud AI Configuration")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundColor(.white)
+                                    
+                                    Picker("Provider", selection: $cloudService.selectedProvider) {
+                                        ForEach(AIProvider.allCases) { provider in
+                                            Text(provider.rawValue).tag(provider)
+                                        }
+                                    }
+                                    .pickerStyle(SegmentedPickerStyle())
+                                    .padding(.horizontal)
+                                    
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        Text("\(cloudService.selectedProvider.rawValue) API Key")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.white.opacity(0.6))
+                                        
+                                        Group {
+                                            if cloudService.selectedProvider == .anthropic {
+                                                SecureField("sk-ant-...", text: $cloudService.anthropicKey)
+                                            } else if cloudService.selectedProvider == .gemini {
+                                                SecureField("AIza...", text: $cloudService.geminiKey)
+                                            } else {
+                                                SecureField("sk-...", text: $cloudService.openaiKey)
+                                            }
+                                        }
+                                        .textFieldStyle(PlainTextFieldStyle())
+                                        .padding()
+                                        .background(Color.white.opacity(0.1))
+                                        .cornerRadius(10)
+                                        .foregroundColor(.white)
+                                    }
+                                    .padding(.horizontal)
+                                    
+                                    HStack(spacing: 12) {
+                                        Button(action: { showCloudSetup = false }) {
+                                            Text("Back")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(.white.opacity(0.6))
+                                                .frame(maxWidth: .infinity)
+                                                .padding()
+                                                .background(Color.white.opacity(0.1))
+                                                .cornerRadius(12)
+                                        }
+                                        
+                                        Button(action: {
+                                            cameraManager.scoringMode = .cloud
+                                            selectionRequired = false
+                                            cameraManager.start()
+                                        }) {
+                                            Text("Start Lens")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(.white)
+                                                .frame(maxWidth: .infinity)
+                                                .padding()
+                                                .background(Color.blue)
+                                                .cornerRadius(12)
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
+                                .padding()
+                                .background(Color.white.opacity(0.05))
+                                .cornerRadius(20)
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
                             }
                         }
                         .padding(.horizontal, 30)
@@ -152,101 +222,144 @@ public struct CameraView: View {
             
             // HUD and Controls
             VStack(spacing: 0) {
-                // Top HUD
-                VStack(spacing: 8) {
-                    HStack {
-                        // Scoring Mode Toggle
-                        Picker("Scoring", selection: $cameraManager.scoringMode) {
-                            Text("COREML").tag(ScoringMode.local)
-                            Text("CLOUD").tag(ScoringMode.cloud)
+                // Slim Top Bar
+                HStack(spacing: 12) {
+                    // Optimized Mode Picker
+                    Picker("Scoring", selection: $cameraManager.scoringMode) {
+                        Text("LOCAL").tag(ScoringMode.local)
+                        Text("CLOUD").tag(ScoringMode.cloud)
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .frame(width: 140)
+                    .scaleEffect(0.9)
+                    
+                    if (cameraManager.scoringMode == .cloud && cameraManager.cloudScoringService.isScoring) || cloudService.isAnalyzing {
+                        HStack(spacing: 6) {
+                            if let lastFrame = cameraManager.cloudScoringService.lastAnonymizedFrame {
+                                Image(uiImage: lastFrame)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 30, height: 30)
+                                    .clipShape(Circle())
+                                    .overlay(Circle().stroke(Color.green, lineWidth: 1))
+                            }
+                            Image(systemName: "face.dashed.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.green)
                         }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .frame(width: 160)
-                        
-                        Spacer()
-                        
-                        // Gallery Button
+                        .transition(.opacity)
+                    }
+                    
+                    Spacer()
+                    
+                    // Compact Gallery & Settings Buttons
+                    HStack(spacing: 12) {
                         Button(action: { showGallery = true }) {
-                            Image(systemName: "photo.on.rectangle.angled")
-                                .font(.system(size: 24))
+                            Image(systemName: "photo.stack")
+                                .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.white)
-                                .padding(12)
+                                .frame(width: 40, height: 40)
+                                .background(BlurView(style: .systemThinMaterialDark).clipShape(Circle()))
+                        }
+                        
+                        Button(action: { showSettings.toggle() }) {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 40, height: 40)
                                 .background(BlurView(style: .systemThinMaterialDark).clipShape(Circle()))
                         }
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 50)
-                    
-                    if cameraManager.scoringMode == .cloud && cameraManager.cloudScoringService.isScoring {
-                        Text("Cloud AI is reasoning...")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(.blue.opacity(0.8))
-                            .padding(.top, 2)
-                            .transition(.opacity)
-                    }
                 }
+                .padding(.horizontal)
+                .padding(.top, 44)
                 
-                // Score Ring & Pro Tip
-                HStack(alignment: .top) {
+                // Small Score Ring (Floating)
+                HStack {
                     ScoreRing(score: cameraManager.aestheticAnalyzer.aestheticScore)
-                        .padding(.leading, 20)
+                        .scaleEffect(0.7) // Shrink to ~56px
+                        .frame(width: 60, height: 60)
+                        .padding(.leading, 10)
+                    
+                    if cameraManager.scoringMode == .cloud && !cameraManager.cloudScoringService.isScoring && !cloudService.isAnalyzing {
+                        if cloudService.currentKey.isEmpty {
+                            HStack(spacing: 4) {
+                                Image(systemName: "key.fill")
+                                Text("Key Required")
+                            }
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundColor(.red)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.red.opacity(0.1).cornerRadius(4))
+                        } else {
+                            Text("Cloud AI Active")
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundColor(.blue.opacity(0.8))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(BlurView(style: .systemThinMaterialDark).cornerRadius(4))
+                        }
+                    }
                     
                     Spacer()
                 }
-                .padding(.top, 16)
+                .padding(.top, 8)
                 
-                // Tip Card (New for Phase 4)
+                // Compact Tip Bubble (Floating Bottom-Left)
                 if !cameraManager.tipGenerator.currentTip.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "lightbulb.fill")
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 10))
                                 .foregroundColor(.yellow)
-                            Text("PRO TIP")
-                                .font(.system(size: 12, weight: .black))
-                                .foregroundColor(.yellow)
+                            Text("AI TIP")
+                                .font(.system(size: 8, weight: .black))
+                                .foregroundColor(.yellow.opacity(0.8))
                         }
                         
                         Text(cameraManager.tipGenerator.currentTip)
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(BlurView(style: .systemThinMaterialDark).cornerRadius(16))
-                    .padding(.horizontal)
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .bottom).combined(with: .opacity),
-                        removal: .opacity
-                    ))
-                    .id(cameraManager.tipGenerator.currentTip) // Force refresh animation on tip change
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 14)
+                    .frame(maxWidth: 220, alignment: .leading)
+                    .background(BlurView(style: .systemThinMaterialDark).cornerRadius(12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    .padding(.leading, 16)
+                    .padding(.bottom, 8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .id(cameraManager.tipGenerator.currentTip)
                 }
                 
                 Spacer()
                 
-                // Bottom Overlay for weakest scores (Coaching)
+                // Mini Attribute HUD (Coaching) - Shrink and move to edge
                 if cameraManager.aestheticAnalyzer.aestheticScore > 0 {
-                    HStack {
+                    HStack(spacing: 12) {
                         ForEach(weakestAttributes, id: \.0) { attr, score in
-                            VStack(spacing: 4) {
-                                Text(attr)
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(.white.opacity(0.8))
+                            HStack(spacing: 6) {
+                                Text(attr.prefix(4).uppercased())
+                                    .font(.system(size: 8, weight: .black))
+                                    .foregroundColor(.white.opacity(0.6))
                                 
-                                Capsule()
-                                    .fill(scoreColor(score).opacity(0.6))
-                                    .frame(width: 80, height: 24)
-                                    .overlay(
-                                        Text(String(format: "%.1f", score))
-                                            .foregroundColor(.white)
-                                            .font(.system(size: 12, weight: .medium, design: .monospaced))
-                                    )
+                                Text(String(format: "%.1f", score))
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 3)
+                                    .background(scoreColor(score).opacity(0.4))
+                                    .cornerRadius(4)
                             }
-                            .padding(.horizontal, 4)
+                            .padding(4)
+                            .background(BlurView(style: .systemThinMaterialDark).cornerRadius(6))
                         }
                     }
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .padding(.bottom, 30)
+                    .padding(.horizontal)
+                    .padding(.bottom, 12)
+                    .transition(.opacity)
                 }
                 
                 // Capture Button
@@ -330,6 +443,64 @@ public struct CameraView: View {
                     }
                 }
                 .transition(.opacity.combined(with: .scale))
+            }
+            
+            // Floating Settings Panel
+            if showSettings {
+                VStack {
+                    Spacer()
+                    VStack(spacing: 20) {
+                        HStack {
+                            Text("AI Engine Settings")
+                                .font(.system(size: 18, weight: .bold))
+                            Spacer()
+                            Button(action: { showSettings = false }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.white.opacity(0.4))
+                                    .font(.title3)
+                            }
+                        }
+                        
+                        Picker("Provider", selection: $cloudService.selectedProvider) {
+                            ForEach(AIProvider.allCases) { provider in
+                                Text(provider.rawValue).tag(provider)
+                            }
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                        
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("\(cloudService.selectedProvider.rawValue) API Key")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white.opacity(0.6))
+                            
+                            Group {
+                                if cloudService.selectedProvider == .anthropic {
+                                    SecureField("sk-ant-...", text: $cloudService.anthropicKey)
+                                } else if cloudService.selectedProvider == .gemini {
+                                    SecureField("AIza...", text: $cloudService.geminiKey)
+                                } else {
+                                    SecureField("sk-...", text: $cloudService.openaiKey)
+                                }
+                            }
+                            .textFieldStyle(PlainTextFieldStyle())
+                            .padding()
+                            .background(Color.white.opacity(0.1))
+                            .cornerRadius(10)
+                            .foregroundColor(.white)
+                        }
+                        
+                        Text("Changes take effect immediately for live scoring.")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.4))
+                            .italic()
+                    }
+                    .padding(24)
+                    .background(BlurView(style: .systemMaterialDark).cornerRadius(30))
+                    .padding()
+                    .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .zIndex(5)
             }
         }
         .animation(.spring(), value: cameraManager.aestheticAnalyzer.aestheticScore)
