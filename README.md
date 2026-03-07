@@ -1,19 +1,19 @@
-# LensCoach 📸🤖
+# LensCoach 
 
 LensCoach is a state-of-the-art AI photography assistant that combines real-time Computer Vision with deep-reasoning Large Language Models to help you take better photos.
 
-## 🏗 Architecture
+## Architecture
 LensCoach uses a **hybrid architecture** for maximum performance and flexibility:
 - **LensCoachApp (SPM)**: The core logic library. Contains the CoreML aesthetic analysis engine, local LLM tip generator, and cloud provider integrations.
 - **LensCoachNative (iOS App)**: A native SwiftUI wrapper that handles the camera session, UI/UX, and local persistence.
 
-## ✨ Key Features
+## Key Features
 - **Hybrid Scoring**: Toggle between local **CoreML (15fps)** and **Cloud AI (GPT-4o/Gemini/Claude)**.
 - **Proactive Coaching**: Real-time HUD tips generated every 2.5s to improve your composition.
 - **Artistic Critique**: On-demand deep-dive reviews of your captures using multi-provider Vision models.
 - **Portfolio Analytics**: Track your growth over time with interactive trend charts.
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Prerequisites
 - **Xcode 15.0+**
@@ -40,8 +40,5 @@ Since `FrameScore.mlmodelc` (~8MB) is your custom trained model, ensure you have
 3. Ensure the `LensCoachApp` dependency (in the Project Navigator) is correctly resolved (it uses a relative local path).
 4. Select your iPhone as the target and press **Cmd + R**.
 
-## 🔑 API Keys
+## API Keys
 LensCoach supports **Anthropic**, **Gemini**, and **OpenAI**. API keys are managed securely in-memory during your session. You will be prompted to enter a key when requesting a Cloud Critique or using Cloud Scoring mode.
-
----
-*Built for the MLE / iOS Portfolio Showcase.*
