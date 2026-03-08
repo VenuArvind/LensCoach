@@ -99,4 +99,17 @@ public class GalleryManager: ObservableObject {
             print("Error loading gallery index: \(error)")
         }
     }
+    
+    public func clearAll() {
+        do {
+            if fileManager.fileExists(atPath: baseDirectory.path) {
+                try fileManager.removeItem(at: baseDirectory)
+            }
+            DispatchQueue.main.async {
+                self.photos = []
+            }
+        } catch {
+            print("Error clearing gallery: \(error)")
+        }
+    }
 }

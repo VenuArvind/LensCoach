@@ -70,6 +70,7 @@ public struct CameraView: View {
     @State private var selectionRequired = true
     @State private var showCloudSetup = false
     @State private var showSettings = false
+    @State private var showDeleteConfirmation = false
     
     public init() {}
     
@@ -493,6 +494,21 @@ public struct CameraView: View {
                             .font(.system(size: 10))
                             .foregroundColor(.white.opacity(0.4))
                             .italic()
+                        
+                        Divider().background(Color.white.opacity(0.1))
+                        
+                        Button(role: .destructive, action: { showDeleteConfirmation = true }) {
+                            HStack {
+                                Image(systemName: "trash.fill")
+                                Text("Delete All Captured Photos")
+                            }
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.red)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(12)
+                        }
                     }
                     .padding(24)
                     .background(BlurView(style: .systemMaterialDark).cornerRadius(30))
@@ -501,6 +517,15 @@ public struct CameraView: View {
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .zIndex(5)
+                .alert("Delete All Photos?", isPresented: $showDeleteConfirmation) {
+                    Button("Cancel", role: .cancel) { }
+                    Button("Delete All", role: .destructive) {
+                        GalleryManager.shared.clearAll()
+                        showSettings = false
+                    }
+                } message: {
+                    Text("This will permanently remove all photos from your LensCoach gallery. This action cannot be undone.")
+                }
             }
         }
         .animation(.spring(), value: cameraManager.aestheticAnalyzer.aestheticScore)
