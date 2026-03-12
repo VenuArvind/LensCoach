@@ -15,35 +15,12 @@ body {
     width: 900px;
     margin-bottom: 50px;
 }
-.instructions {
-    background: #222;
-    padding: 20px;
-    border-radius: 8px;
-    border: 1px solid #444;
-    margin-bottom: 30px;
-}
-code {
-    background: #000;
-    padding: 2px 5px;
-    border-radius: 4px;
-}
 </style>
 </head>
 
 <body>
 
-<h2>Diagnostics Performance Dashboard</h2>
-
-<div class="instructions">
-    <h3>Preparation Instructions</h3>
-    <p>To populate these graphs with your real on-device data:</p>
-    <ol>
-        <li>Download the <code>diagnostics.csv</code> from your iPhone (following the <em>Validation Guide</em>).</li>
-        <li>Open the CSV and copy your values for <strong>FPS</strong>, <strong>Latency</strong>, and <strong>Memory</strong>.</li>
-        <li>Open this <code>dashboard.html</code> file in a text editor.</li>
-        <li>Replace the empty arrays in the <code>&lt;script&gt;</code> section at the bottom with your real numbers.</li>
-    </ol>
-</div>
+<h2>Diagnostics Performance Graphs</h2>
 
 <div class="chart-container">
 <canvas id="fpsChart"></canvas>
@@ -58,26 +35,33 @@ code {
 </div>
 
 <script>
-/**
- * REPLACE THESE ARRAYS WITH YOUR REAL DATA FROM diagnostics.csv
- */
-const fps = []; // Example: [30, 28, 30, 31...]
-const latency = []; // Example: [5.1, 4.8, 5.2...]
-const memory = []; // Example: [102.4, 103.1, 102.8...]
 
-const labels = Array.from({length: Math.max(fps.length, latency.length, memory.length)}, (_, i) => i+1);
+const labels = Array.from({length: 80}, (_, i) => i+1);
 
-function createChart(canvasId, label, data, color) {
-    if (data.length === 0) {
-        // Show empty state if no data
-        const ctx = document.getElementById(canvasId).getContext('2d');
-        ctx.font = "20px Arial";
-        ctx.fillStyle = "#666";
-        ctx.textAlign = "center";
-        ctx.fillText(`No ${label} data provided. Follow instructions above to populate.`, 450, 150);
-        return;
-    }
+const fps = [
+0,0,0,2,28,30,23,33,23,30,30,30,30,30,30,23,30,30,30,30,
+30,29,28,20,20,20,24,18,18,20,12,20,23,14,32,7,20,17,16,20,
+14,18,20,20,19,20,20,20,20,20,20,20,19,20,20,20,20,20,20,20,
+24,30,22,25,19,15,17,20,21,20,20,20,20,20,20,19,20,20,20,20
+];
 
+const latency = [
+0,0,0,0,6.5,5.1,5.2,3.3,4.7,5.8,4.7,5.2,4.9,4.8,5.3,3.6,4.1,4.1,4.9,5.1,
+4.3,5.0,4.3,5.2,4.9,3.9,5.0,3.5,4.8,6.9,3.8,5.0,3.7,5.0,3.8,5.9,5.3,4.3,3.6,5.2,
+3.2,4.9,5.4,5.2,6.1,5.8,6.4,4.9,8.5,5.5,8.1,7.3,5.7,7.3,7.2,6.4,7.0,7.3,5.5,6.3,
+4.3,4.5,3.9,5.0,3.3,4.3,7.3,4.6,5.5,5.7,6.5,5.7,5.5,6.0,5.6,5.8,5.4,5.2,4.7,5.6
+];
+
+const memory = [
+123.4,123.9,123.9,125.0,113.2,112.4,110.4,77.5,79.2,79.4,79.2,79.3,79.4,79.5,79.5,
+82.3,82.4,82.7,82.4,82.3,82.5,82.5,82.5,82.4,80.9,80.8,78.8,81.8,84.5,84.6,82.0,
+84.8,99.5,99.6,101.7,101.7,94.7,97.4,99.4,99.1,103.8,104.0,104.1,104.2,103.8,103.9,
+103.5,103.6,103.5,103.4,103.4,101.2,101.2,101.2,101.2,101.2,101.2,101.3,101.4,101.7,
+101.5,99.0,102.6,102.3,101.0,103.6,103.3,103.5,103.4,103.4,103.3,103.3,103.3,103.3,
+103.3,101.2,101.2,101.4,101.6,101.2
+];
+
+function createChart(canvasId, label, data) {
     new Chart(document.getElementById(canvasId), {
         type: 'line',
         data: {
@@ -85,8 +69,8 @@ function createChart(canvasId, label, data, color) {
             datasets: [{
                 label: label,
                 data: data,
-                borderColor: color,
-                backgroundColor: color + '33',
+                borderColor: '#2196F3',
+                backgroundColor: 'rgba(33,150,243,0.1)',
                 fill: true,
                 tension: 0.2
             }]
@@ -94,19 +78,16 @@ function createChart(canvasId, label, data, color) {
         options: {
             responsive: true,
             scales: {
-                x: { title: { display: true, text: "Sample Count", color: '#999' }, grid: { color: '#333' } },
-                y: { title: { display: true, text: label, color: '#999' }, grid: { color: '#333' } }
-            },
-            plugins: {
-                legend: { labels: { color: 'white' } }
+                x: { title: { display: true, text: "Sample Count", color: '#999' }},
+                y: { title: { display: true, text: label, color: '#999' }}
             }
         }
     });
 }
 
-createChart("fpsChart", "Measured FPS", fps, '#4CAF50');
-createChart("latencyChart", "Inference Latency (ms)", latency, '#2196F3');
-createChart("memoryChart", "Physical Memory (MB)", memory, '#FF9800');
+createChart("fpsChart","FPS",fps);
+createChart("latencyChart","Latency (ms)",latency);
+createChart("memoryChart","Memory (MB)",memory);
 
 </script>
 
