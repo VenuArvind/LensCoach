@@ -23,5 +23,6 @@ xcuserdata/
 
 # Performance & Interview Docs
 *.trace/
+*.trace
 lenscoach_interview_prep.md*
 lenscoach_validation_guide.md*
