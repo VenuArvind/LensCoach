@@ -24,7 +24,7 @@ Designed for professionals, LensCoach implements a rigorous privacy layer:
 
 ---
 
-## ⚡ Hardware Benchmarks (iPhone 13 Pro)
+## ⚡ Hardware Benchmarks (iPhone 15)
 | Metric | Performance | Technical Significance |
 | :--- | :---: | :--- |
 | **Throughput (FPS)** | **~24 FPS** | Sustained real-time augmented overlay |
