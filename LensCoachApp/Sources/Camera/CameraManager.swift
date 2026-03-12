@@ -133,6 +133,7 @@ public class CameraManager: NSObject, ObservableObject, AVCaptureVideoDataOutput
         // Always update preview layer for UI smoothness
         DispatchQueue.main.async {
             self.currentFrame = pixelBuffer
+            DiagnosticsManager.shared.reportFrame()
         }
         
         // Frame Sampling: Every 2nd frame for local inference

@@ -6,9 +6,14 @@
 //
 
 import SwiftUI
+import LensCoachApp
 
 @main
 struct LensCoachNativeApp: App {
+    init() {
+        DiagnosticsManager.shared.startLogging()
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()

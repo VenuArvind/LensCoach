@@ -54,8 +54,11 @@ public class AestheticAnalyzer: ObservableObject {
         request.imageCropAndScaleOption = .centerCrop
         
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+        let startTime = CFAbsoluteTimeGetCurrent()
         do {
             try handler.perform([request])
+            let latency = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+            DiagnosticsManager.shared.reportInferenceLatency(latency)
         } catch {
             print("Vision request failed: \(error)")
         }
