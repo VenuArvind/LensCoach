@@ -20,3 +20,8 @@ xcuserdata/
 # Large Media / Models
 *.mlmodelc
 *.gguf
+
+# Performance & Interview Docs
+*.trace/
+lenscoach_interview_prep.md*
+lenscoach_validation_guide.md*
